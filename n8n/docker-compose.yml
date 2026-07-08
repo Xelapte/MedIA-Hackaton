@@ -1,0 +1,30 @@
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=${SUBDOMAIN}.${DOMAIN_NAME}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      # Retire bien les slash finaux sur ces deux variables :
+      - WEBHOOK_URL=https://${SUBDOMAIN}.${DOMAIN_NAME}
+      - N8N_EDITOR_BASE_URL=https://${SUBDOMAIN}.${DOMAIN_NAME}
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+      # If connecting to your existing Ollama container on the same network:
+      # - OLLAMA_HOST=ollama:11434
+    volumes:
+      - n8n_data:/home/node/.n8n
+    # Uncomment to attach to your existing custom network
+    # networks:
+    #   - your_proxy_network
+
+volumes:
+  n8n_data:
+
+# networks:
+#   your_proxy_network:
+#     external: true
