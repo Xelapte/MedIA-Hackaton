@@ -10,21 +10,33 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        ink: "#1a1d1f",
-        paper: "#faf9f6",
+        ink: "#1e1b15",
+        paper: "#f1ead6",
+        card: "#fffdf7",
         accent: {
-          DEFAULT: "#1d4ed8",
-          hover: "#1e40af",
+          DEFAULT: "#21504a",
+          hover: "#153733",
         },
         verdict: {
-          true: "#15803d",
-          false: "#b91c1c",
-          misleading: "#b45309",
-          unverified: "#52525b",
+          true: "#2f6b3a",
+          false: "#a32b1f",
+          misleading: "#b0731a",
+          unverified: "#5b564a",
         },
       },
       fontFamily: {
-        serif: ["Georgia", "Cambria", "Times New Roman", "serif"],
+        serif: ["var(--font-display)", "Georgia", "Cambria", "serif"],
+        sans: ["var(--font-body)", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
+      },
+      keyframes: {
+        "fade-in": {
+          from: { opacity: "0", transform: "translateY(4px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+      animation: {
+        "fade-in": "fade-in 0.12s ease-out",
       },
     },
   },

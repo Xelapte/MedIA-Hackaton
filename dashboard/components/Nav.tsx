@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
-import { Search, ShieldCheck } from "lucide-react";
+import { Radio, ScanSearch, Search, ShieldCheck } from "lucide-react";
 import { NewsPayload } from "@/types";
 import { categoriesFrom } from "@/lib/verdict";
+import { useLanguage } from "@/lib/LanguageContext";
+import LanguageSelector from "./LanguageSelector";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -14,8 +16,12 @@ export default function Nav() {
   const searchParams = useSearchParams();
   const activeCategory = searchParams.get("category");
   const q = searchParams.get("q") ?? "";
+  const { lang, t } = useLanguage();
 
-  const { data: items } = useSWR<NewsPayload[]>("/api/webhook", fetcher, { fallbackData: [] });
+  const { data: items } = useSWR<NewsPayload[]>(`/api/webhook?lang=${lang}`, fetcher, {
+    fallbackData: [],
+    keepPreviousData: true,
+  });
   const categories = categoriesFrom(items ?? []);
 
   function setParam(key: string, value: string | null) {
@@ -27,14 +33,33 @@ export default function Nav() {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-black/10 bg-paper/95 backdrop-blur supports-[backdrop-filter]:bg-paper/80">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 md:h-16 md:px-6">
+    <header className="sticky top-0 z-20 border-b border-ink/10 bg-paper/95 backdrop-blur supports-[backdrop-filter]:bg-paper/80">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-5 px-4 md:h-16 md:px-6">
         <Link
           href="/"
           className="flex shrink-0 items-center gap-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <ShieldCheck className="text-accent" size={22} aria-hidden="true" />
           <span className="font-serif text-lg font-bold tracking-tight text-ink">Verity</span>
+          <span className="hidden font-mono text-[10px] uppercase tracking-[0.18em] text-ink/40 md:inline">
+            Verified Wire
+          </span>
+        </Link>
+
+        <Link
+          href="/radio"
+          className="flex shrink-0 items-center gap-1.5 rounded-[3px] border border-ink/15 px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-wide text-ink/70 transition-colors hover:border-accent hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <Radio size={14} aria-hidden="true" />
+          <span className="hidden sm:inline">{t("nav.liveRadio")}</span>
+        </Link>
+
+        <Link
+          href="/fact-check"
+          className="flex shrink-0 items-center gap-1.5 rounded-[3px] border border-ink/15 px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-wide text-ink/70 transition-colors hover:border-accent hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <ScanSearch size={14} aria-hidden="true" />
+          <span className="hidden sm:inline">{t("nav.factCheck")}</span>
         </Link>
 
         <nav aria-label="Categories" className="hidden items-center gap-1 text-sm md:flex">
@@ -44,8 +69,10 @@ export default function Nav() {
               type="button"
               onClick={() => setParam("category", activeCategory === cat ? null : cat)}
               aria-current={activeCategory === cat ? "page" : undefined}
-              className={`rounded-full px-3 py-1.5 font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-                activeCategory === cat ? "bg-ink text-paper" : "text-ink/70 hover:bg-ink/5"
+              className={`border-b-2 px-3 py-1.5 font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                activeCategory === cat
+                  ? "border-accent text-ink"
+                  : "border-transparent text-ink/60 hover:text-ink"
               }`}
             >
               {cat}
@@ -55,7 +82,7 @@ export default function Nav() {
 
         <div className="ml-auto flex items-center gap-2">
           <label className="relative hidden sm:block">
-            <span className="sr-only">Search articles</span>
+            <span className="sr-only">{t("nav.searchLabel")}</span>
             <Search
               className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink/40"
               size={16}
@@ -65,16 +92,17 @@ export default function Nav() {
               type="search"
               value={q}
               onChange={(e) => setParam("q", e.target.value || null)}
-              placeholder="Search articles"
-              className="w-40 rounded-full border border-black/10 bg-white py-1.5 pl-8 pr-3 text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-2 focus:ring-accent md:w-64"
+              placeholder={t("nav.searchPlaceholder")}
+              className="w-40 rounded-[3px] border border-ink/15 bg-card py-1.5 pl-8 pr-3 font-mono text-sm text-ink placeholder:text-ink/40 focus:outline-none focus:ring-2 focus:ring-accent md:w-64"
             />
           </label>
+          <LanguageSelector />
         </div>
       </div>
 
       <nav
         aria-label="Categories"
-        className="no-scrollbar flex gap-2 overflow-x-auto px-4 pb-2 md:hidden"
+        className="no-scrollbar flex gap-4 overflow-x-auto px-4 pb-2 md:hidden"
       >
         {categories.map((cat) => (
           <button
@@ -82,10 +110,10 @@ export default function Nav() {
             type="button"
             onClick={() => setParam("category", activeCategory === cat ? null : cat)}
             aria-current={activeCategory === cat ? "page" : undefined}
-            className={`shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+            className={`shrink-0 border-b-2 pb-1 text-xs font-medium transition-colors ${
               activeCategory === cat
-                ? "border-ink bg-ink text-paper"
-                : "border-black/10 text-ink/70 hover:bg-ink/5"
+                ? "border-accent text-ink"
+                : "border-transparent text-ink/60"
             }`}
           >
             {cat}

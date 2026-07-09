@@ -5,21 +5,33 @@ import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { NewsPayload } from "@/types";
 import ArticleCard from "@/components/ArticleCard";
+import { useLanguage } from "@/lib/LanguageContext";
+import { translateCategory } from "@/lib/i18n";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function HomePage() {
   return (
-    <Suspense fallback={<EmptyState message="Loading verified stories…" />}>
+    <Suspense fallback={<EmptyStateFallback />}>
       <HomeContent />
     </Suspense>
   );
 }
 
+function EmptyStateFallback() {
+  const { t } = useLanguage();
+  return <EmptyState message={t("home.loading")} />;
+}
+
 function HomeContent() {
-  const { data: items } = useSWR<NewsPayload[]>("/api/webhook", fetcher, {
+  const { lang, t } = useLanguage();
+  // keepPreviousData: language is a reading preference, not a filter — the
+  // article list must never blank out just because the SWR key changed
+  // from ?lang=en to ?lang=fr while the new translation is still loading.
+  const { data: items } = useSWR<NewsPayload[]>(`/api/webhook?lang=${lang}`, fetcher, {
     refreshInterval: 5000,
     fallbackData: [],
+    keepPreviousData: true,
   });
 
   const searchParams = useSearchParams();
@@ -61,22 +73,24 @@ function HomeContent() {
     return map;
   }, [rest]);
 
-  const eyebrow = q ? `Results for "${q}"` : activeCategory ? activeCategory : "Top Stories";
-  const heading = activeCategory ? `${activeCategory} News` : q ? "Search Results" : "Verified, in real time";
+  const eyebrow = q
+    ? t("home.eyebrowSearch", { q })
+    : activeCategory
+      ? translateCategory(lang, activeCategory)
+      : t("home.eyebrowTop");
+  const heading = activeCategory
+    ? t("home.headingCategory", { category: translateCategory(lang, activeCategory) })
+    : q
+      ? t("home.headingSearch")
+      : t("home.headingDefault");
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-10">
-      <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-accent">{eyebrow}</p>
+      <p className="mb-1 font-mono text-xs font-semibold uppercase tracking-[0.18em] text-accent">{eyebrow}</p>
       <h1 className="mb-8 font-serif text-3xl font-bold text-ink md:text-4xl">{heading}</h1>
 
       {sorted.length === 0 && (
-        <EmptyState
-          message={
-            isFiltering
-              ? "No stories match your filters."
-              : "Listening for incoming stories… send a POST request to /api/webhook."
-          }
-        />
+        <EmptyState message={isFiltering ? t("home.emptyFiltered") : t("home.emptyDefault")} />
       )}
 
       {topStory && (
@@ -88,8 +102,8 @@ function HomeContent() {
       {!isFiltering ? (
         Array.from(byCategory.entries()).map(([category, categoryItems]) => (
           <section key={category} className="mb-10">
-            <h2 className="mb-4 border-b border-black/10 pb-2 font-serif text-xl font-bold text-ink">
-              {category}
+            <h2 className="mb-4 border-b border-ink/10 pb-2 font-serif text-xl font-bold text-ink">
+              {translateCategory(lang, category)}
             </h2>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {categoryItems.map((item) => (
@@ -111,7 +125,7 @@ function HomeContent() {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-black/15 py-24 text-center text-ink/40">
+    <div className="rounded-md border border-dashed border-ink/20 py-24 text-center font-mono text-sm text-ink/40">
       {message}
     </div>
   );

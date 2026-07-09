@@ -1,2 +1,6 @@
 node_modules/
 .venv/
+.next/
+.agents/
+app/audio_clips/
+n8n/.env
