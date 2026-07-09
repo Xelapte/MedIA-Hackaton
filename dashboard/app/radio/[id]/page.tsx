@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
@@ -9,9 +9,8 @@ import { NewsPayload } from "@/types";
 import { RadioStation, countryFlag, getStation } from "@/lib/stations";
 import { useLanguage } from "@/lib/LanguageContext";
 import { computeBullshitScore, computeBullshitScoresByCategory } from "@/lib/bullshitScore";
-import ArticleCard from "@/components/ArticleCard";
 import BullshitScoreBadge from "@/components/BullshitScoreBadge";
-import CategoryBullshitScores from "@/components/CategoryBullshitScores";
+import ClaimHistoryLayout from "@/components/ClaimHistoryLayout";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -44,6 +43,17 @@ export default function StationDetailPage() {
   const score = useMemo(() => computeBullshitScore(stationStories), [stationStories]);
   const categoryScores = useMemo(() => computeBullshitScoresByCategory(stationStories), [stationStories]);
 
+  const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
+
+  // Default to the most recent story, and follow along as new ones arrive —
+  // but only while nothing has been explicitly picked yet, so a user reading
+  // an older claim isn't yanked away when a fresh one lands mid-read.
+  useEffect(() => {
+    if (selectedId && stationStories.some((s) => s.id === selectedId)) return;
+    setSelectedId(stationStories[0]?.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stationStories]);
+
   if (!station) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center">
@@ -62,7 +72,7 @@ export default function StationDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-10">
+    <div className="mx-auto max-w-[1600px] px-4 py-8 md:px-6 md:py-10">
       <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-1 text-sm text-ink/50">
         <Link href="/radio" className="hover:text-ink hover:underline">
           {t("radio.eyebrow")}
@@ -71,7 +81,7 @@ export default function StationDetailPage() {
         <span>{station.country}</span>
       </nav>
 
-      <div className="mb-10 flex flex-col gap-5 rounded-md border border-ink/10 bg-card p-6">
+      <div className="mb-8 flex flex-col gap-5 rounded-md border border-ink/10 bg-card p-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
           <div className="flex items-center gap-4">
             <span className="text-4xl" aria-hidden="true">
@@ -119,29 +129,17 @@ export default function StationDetailPage() {
         </div>
       </div>
 
-      {categoryScores.length > 0 && (
-        <section className="mb-10">
-          <h2 className="mb-4 border-b border-ink/10 pb-2 font-serif text-xl font-bold text-ink">
-            {t("bs.byTopic")}
-          </h2>
-          <CategoryBullshitScores scores={categoryScores} />
-        </section>
-      )}
-
-      <h2 className="mb-4 border-b border-ink/10 pb-2 font-serif text-xl font-bold text-ink">
-        {t("radio.factCheckedHeading")}
-      </h2>
-
       {stationStories.length === 0 ? (
         <div className="rounded-md border border-dashed border-ink/20 py-16 text-center font-mono text-sm text-ink/40">
           {station.active ? t("radio.emptyMonitored") : t("radio.emptyUnmonitored")}
         </div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {stationStories.map((item) => (
-            <ArticleCard key={item.id} item={item} />
-          ))}
-        </div>
+        <ClaimHistoryLayout
+          stories={stationStories}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          categoryScores={categoryScores}
+        />
       )}
     </div>
   );

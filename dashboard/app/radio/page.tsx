@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import useSWR, { mutate } from "swr";
-import { ChevronRight, Pause, Play, X } from "lucide-react";
+import { ListTree, Pause, Play } from "lucide-react";
 import { NewsPayload } from "@/types";
 import { RadioStation, countryFlag, stationsByCountry } from "@/lib/stations";
 import { useLanguage } from "@/lib/LanguageContext";
-import { computeBullshitScore } from "@/lib/bullshitScore";
+import { computeBullshitScore, scoresByStation } from "@/lib/bullshitScore";
 import RadioPlayerBar from "@/components/RadioPlayerBar";
-import BullshitScoreBadge from "@/components/BullshitScoreBadge";
+import StationCard from "@/components/StationCard";
 import WorldMapStations from "@/components/WorldMapStations";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -54,24 +54,11 @@ export default function RadioIndexPage() {
     };
   }, [popup]);
 
-  const scoresByStation = useMemo(() => {
-    const map = new Map<string, NewsPayload[]>();
-    for (const item of items ?? []) {
-      if (!item.station) continue;
-      const list = map.get(item.station) ?? [];
-      list.push(item);
-      map.set(item.station, list);
-    }
-    const scores = new Map<string, ReturnType<typeof computeBullshitScore>>();
-    map.forEach((stationItems, stationId) => {
-      scores.set(stationId, computeBullshitScore(stationItems));
-    });
-    return scores;
-  }, [items]);
+  const stationScores = useMemo(() => scoresByStation(items ?? []), [items]);
 
   function scoreFor(stationId: string) {
     return (
-      scoresByStation.get(stationId) ?? {
+      stationScores.get(stationId) ?? {
         score: null,
         count: 0,
         trueCount: 0,
@@ -133,9 +120,18 @@ export default function RadioIndexPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 pb-28 md:px-6 md:py-10">
-      <p className="mb-1 font-mono text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-        {t("radio.eyebrow")}
-      </p>
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+          {t("radio.eyebrow")}
+        </p>
+        <Link
+          href="/radio/countries"
+          className="flex shrink-0 items-center gap-1.5 rounded-[3px] border border-ink/15 px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-wide text-ink/70 transition-colors hover:border-accent hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <ListTree size={13} aria-hidden="true" />
+          {t("radio.viewByCountry")}
+        </Link>
+      </div>
       <h1 className="mb-2 font-serif text-3xl font-bold text-ink md:text-4xl">{t("radio.heading")}</h1>
       <p className="mb-6 max-w-2xl text-ink/70">{t("radio.description", { count: grouped.length })}</p>
 
@@ -203,89 +199,6 @@ export default function RadioIndexPage() {
           <RadioPlayerBar station={current} playing={playing} onTogglePlay={togglePlay} onClose={close} />
         </>
       )}
-    </div>
-  );
-}
-
-function StationCard({
-  station,
-  isPlaying,
-  onPlay,
-  onToggleMonitor,
-  score,
-  onClose,
-  elevated,
-}: {
-  station: RadioStation;
-  isPlaying: boolean;
-  onPlay: () => void;
-  onToggleMonitor: () => void;
-  score: ReturnType<typeof computeBullshitScore>;
-  onClose?: () => void;
-  elevated?: boolean;
-}) {
-  const { t } = useLanguage();
-  return (
-    <div
-      className={`group flex flex-col gap-3 rounded-md border border-ink/10 bg-card p-4 transition-shadow ${
-        elevated ? "shadow-xl" : "shadow-sm hover:shadow-md"
-      }`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <Link href={`/radio/${station.id}`} className="min-w-0 flex-1 focus:outline-none">
-          <p className="truncate font-serif text-base font-semibold text-ink group-hover:underline">
-            {station.name}
-          </p>
-          <p className="font-mono text-[11px] uppercase tracking-wide text-ink/50">{station.language}</p>
-        </Link>
-        <div className="flex shrink-0 items-center gap-1.5">
-          <button
-            type="button"
-            onClick={onPlay}
-            aria-label={`Listen to ${station.name}`}
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-              isPlaying
-                ? "border-accent bg-accent text-paper"
-                : "border-ink/15 text-ink/60 hover:border-accent hover:text-accent"
-            }`}
-          >
-            {isPlaying ? <Pause size={14} aria-hidden="true" /> : <Play size={14} aria-hidden="true" className="ml-0.5" />}
-          </button>
-          {onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label={t("radio.close")}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink/40 hover:text-ink/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            >
-              <X size={16} aria-hidden="true" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      <BullshitScoreBadge result={score} size="sm" />
-
-      <div className="flex items-center justify-between border-t border-dashed border-ink/15 pt-3">
-        <button
-          type="button"
-          onClick={onToggleMonitor}
-          aria-pressed={station.active}
-          className={`rounded-[2px] border px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wide transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-            station.active
-              ? "border-verdict-true text-verdict-true"
-              : "border-ink/15 text-ink/40 hover:border-ink/30 hover:text-ink/60"
-          }`}
-        >
-          {station.active ? t("radio.monitored") : t("radio.listenOnly")}
-        </button>
-        <Link
-          href={`/radio/${station.id}`}
-          className="flex items-center gap-0.5 text-xs text-accent hover:underline"
-        >
-          {t("radio.details")} <ChevronRight size={12} aria-hidden="true" />
-        </Link>
-      </div>
     </div>
   );
 }

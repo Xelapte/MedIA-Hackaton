@@ -86,8 +86,18 @@ function HomeContent() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-10">
+      <section className="mb-10 border-b border-ink/10 pb-8">
+        <p className="mb-2 font-mono text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+          {t("home.heroEyebrow")}
+        </p>
+        <h1 className="mb-3 max-w-2xl font-serif text-4xl font-bold leading-tight text-ink md:text-5xl">
+          {t("home.heroHeading")}
+        </h1>
+        <p className="max-w-2xl text-ink/70">{t("home.heroDescription")}</p>
+      </section>
+
       <p className="mb-1 font-mono text-xs font-semibold uppercase tracking-[0.18em] text-accent">{eyebrow}</p>
-      <h1 className="mb-8 font-serif text-3xl font-bold text-ink md:text-4xl">{heading}</h1>
+      <h2 className="mb-8 font-serif text-3xl font-bold text-ink md:text-4xl">{heading}</h2>
 
       {sorted.length === 0 && (
         <EmptyState message={isFiltering ? t("home.emptyFiltered") : t("home.emptyDefault")} />

@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { NewsPayload, Source } from "@/types";
 import { translateItems } from "@/lib/translate";
-
-const globalForStore = global as unknown as { newsStore: NewsPayload[] };
-const newsStore = globalForStore.newsStore || [];
-if (process.env.NODE_ENV !== "production") globalForStore.newsStore = newsStore;
+import { getAllArticles, insertArticle } from "@/lib/db";
 
 // The n8n fact-checking LLM occasionally drifts from the agreed JSON
 // contract (missing fields, renamed keys, or a totally different shape when
@@ -72,8 +69,7 @@ export async function POST(req: NextRequest) {
     const payload = normalizePayload(raw);
     const newItem = { ...payload, id: crypto.randomUUID(), timestamp: Date.now() };
 
-    newsStore.unshift(newItem);
-    if (newsStore.length > 100) newsStore.pop();
+    insertArticle(newItem);
 
     return NextResponse.json({ success: true, id: newItem.id }, { status: 201 });
   } catch {
@@ -83,6 +79,6 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const lang = req.nextUrl.searchParams.get("lang") ?? "en";
-  const items = await translateItems(newsStore, lang);
+  const items = await translateItems(getAllArticles(), lang);
   return NextResponse.json(items);
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
-import { Radio, ScanSearch, Search, ShieldCheck } from "lucide-react";
+import { Mic, Radio, ScanSearch, Search, ShieldCheck } from "lucide-react";
 import { NewsPayload } from "@/types";
 import { categoriesFrom } from "@/lib/verdict";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -60,6 +60,14 @@ export default function Nav() {
         >
           <ScanSearch size={14} aria-hidden="true" />
           <span className="hidden sm:inline">{t("nav.factCheck")}</span>
+        </Link>
+
+        <Link
+          href="/interview"
+          className="flex shrink-0 items-center gap-1.5 rounded-[3px] border border-ink/15 px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-wide text-ink/70 transition-colors hover:border-accent hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <Mic size={14} aria-hidden="true" />
+          <span className="hidden sm:inline">{t("nav.interview")}</span>
         </Link>
 
         <nav aria-label="Categories" className="hidden items-center gap-1 text-sm md:flex">

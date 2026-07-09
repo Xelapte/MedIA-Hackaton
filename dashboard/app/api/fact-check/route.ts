@@ -9,16 +9,20 @@ const N8N_WEBHOOK_URL =
 
 export async function POST(req: NextRequest) {
   try {
-    const { text, language } = await req.json();
+    const { text, language, station, stationName } = await req.json();
     if (typeof text !== "string" || !text.trim()) {
       return NextResponse.json({ error: "text is required" }, { status: 400 });
     }
 
-    const submissionId = `manual-${crypto.randomUUID()}`;
+    // A caller can pass a persistent `station` id (e.g. a live interview
+    // session) so every chunk it submits groups under the same id instead of
+    // each getting its own throwaway one — same mechanism a radio station
+    // uses to accumulate a running history.
+    const submissionId = typeof station === "string" && station ? station : `manual-${crypto.randomUUID()}`;
     const payload = {
       source: "manual_submission",
       station: submissionId,
-      station_name: "Manual Submission",
+      station_name: typeof stationName === "string" && stationName ? stationName : "Manual Submission",
       country: "N/A",
       timestamp: new Date().toISOString(),
       duration_seconds: 0,

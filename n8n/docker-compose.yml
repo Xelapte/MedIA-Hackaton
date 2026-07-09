@@ -18,6 +18,12 @@ services:
       # - OLLAMA_HOST=ollama:11434
     volumes:
       - n8n_data:/home/node/.n8n
+    # Lets the workflow's HTTP Request node reach the dashboard dev server on
+    # the host via a stable hostname instead of a hardcoded bridge IP, which
+    # changes across machines/reboots and was the root cause of a past
+    # station-tagging regression (the workflow silently pointed at a stale IP).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     # Uncomment to attach to your existing custom network
     # networks:
     #   - your_proxy_network

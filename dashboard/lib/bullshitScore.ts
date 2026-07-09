@@ -95,6 +95,22 @@ export function computeBullshitScore(items: NewsPayload[]): BullshitScoreResult 
   return { score, count, trueCount, falseCount, misleadingCount, unverifiableCount };
 }
 
+// Groups fact-checked stories by the station that aired them and scores
+// each group independently — the shared basis for both the map/sidebar view
+// and the by-country list view, so a station's score can't drift between them.
+export function scoresByStation(items: NewsPayload[]): Map<string, BullshitScoreResult> {
+  const byStation = new Map<string, NewsPayload[]>();
+  for (const item of items) {
+    if (!item.station) continue;
+    const list = byStation.get(item.station) ?? [];
+    list.push(item);
+    byStation.set(item.station, list);
+  }
+  const scores = new Map<string, BullshitScoreResult>();
+  byStation.forEach((stationItems, stationId) => scores.set(stationId, computeBullshitScore(stationItems)));
+  return scores;
+}
+
 export function bullshitRatingKey(score: number): string {
   if (score < 20) return "bs.rating.trustworthy";
   if (score < 40) return "bs.rating.mostlyReliable";

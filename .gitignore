@@ -3,4 +3,6 @@ node_modules/
 .next/
 .agents/
 app/audio_clips/
+dashboard/data/*.db
+dashboard/data/*.db-*
 n8n/.env

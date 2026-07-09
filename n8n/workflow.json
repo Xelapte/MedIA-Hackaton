@@ -1,201 +1,5 @@
 {
-  "name": "My workflow",
-  "nodes": [
-    {
-      "parameters": {
-        "multipleMethods": true,
-        "httpMethod": [
-          "POST"
-        ],
-        "path": "01e87e3f-162c-477c-a364-ff4020cfa302",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2.1,
-      "position": [
-        -96,
-        -176
-      ],
-      "id": "e986aed9-0fb0-4c8f-8b8b-fede0a0119ba",
-      "name": "Webhook",
-      "webhookId": "01e87e3f-162c-477c-a364-ff4020cfa302"
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "={{ $json.body.transcription }}",
-        "options": {
-          "systemMessage": "You are an expert news editor processing a live transcript from a news radio station. The station's language and country vary by feed \u2014 do not assume it's French or any specific language; the transcript language is given by whatever text you're handed.\n\n  Always respond in English, regardless of the transcript's source language. Translate summaries and reasoning into English as you extract them \u2014 do not leave them in the original language.\n\n  Analyze the provided transcript chunk. Sometimes a transcript covers a single topic, and sometimes it contains multiple distinct news stories back-to-back. Break the transcript down into separate news items if necessary.\n\n  CRITICAL FILTERING RULES:\n  You must set \"needs_fact_check\" to false for the following:\n  - Commercial breaks, advertisements, or station jingles.\n  - Sports coverage, match results, or sports commentary.\n  - Weather reports or traffic updates.\n  - Casual banter, host opinions, or filler dialogue.\n\n  For EACH valid, distinct news item you identify, extract the following:\n  1. A concise 1-2 sentence summary of the subject, in English.\n  2. One primary category \u2014 choose the single best fit from this exact list: Politics, Health, Technology, World, Finance, Economy, Business, Culture, Sports, Local, Science, Environment, Security, Justice, Education, Immigration. Only use a category outside this list if genuinely none of them fit.\n  3. A determination of whether this specific item contains significant factual claims, controversial statements, or major breaking news that requires fact-checking (true/false) \u2014 this is the \"needs_fact_check\" field.\n\n  JSON FORMATTING RULES:\n  - Respond STRICTLY in valid JSON, with no markdown formatting (no ```json fences) or extra text outside the JSON.\n  - OUTPUT MINIFIED JSON on a single continuous line \u2014 no physical line breaks anywhere in the output.\n  - Escape any double quotes or backslashes that appear inside string values (e.g. a quoted remark from the transcript) using standard JSON escaping (\\\\\" and \\\\\\\\) \u2014 never leave a raw unescaped quote inside a string.\n  - If the entire transcript chunk consists of excluded content (like a commercial break), return an empty array [].\n\n  You must respond STRICTLY in valid JSON format matching this structure, with no markdown formatting or extra text outside the JSON:\n\n  {\n    \"news_items\": [\n    {\n      \"summary\": \"string\",\n      \"category\": \"string\",\n\n{\n  \"news_items\": [\n    {\n      \"summary\": \"string\",\n      \"category\": \"string\",\n      \"needs_fact_check\": boolean,\n      \"reasoning\": \"Brief explanation of why it does or doesn't need fact-checking\"\n    }\n  ]\n}"
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 3.1,
-      "position": [
-        176,
-        -176
-      ],
-      "id": "9bbf0927-67e1-4fd5-ad81-c51ba4d68656",
-      "name": "AI Agent"
-    },
-    {
-      "parameters": {
-        "model": "ministral-8b-latest",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
-      "typeVersion": 1,
-      "position": [
-        32,
-        32
-      ],
-      "id": "e6d720da-fa8c-4545-a886-8843117dcdd6",
-      "name": "Mistral Cloud Chat Model",
-      "credentials": {
-        "mistralCloudApi": {
-          "id": "HiNpE9TbCxmGsYpG",
-          "name": "Mistral Cloud account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "model": "mistral-large-latest",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
-      "typeVersion": 1,
-      "position": [
-        1152,
-        32
-      ],
-      "id": "fb110646-d932-418d-a16b-95b60d372a20",
-      "name": "Mistral Cloud Chat Model1",
-      "credentials": {
-        "mistralCloudApi": {
-          "id": "HiNpE9TbCxmGsYpG",
-          "name": "Mistral Cloud account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "4da6a931-9d40-48d2-a3f8-719b310e8a78",
-              "leftValue": "={{ $json.needs_fact_check }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        784,
-        -176
-      ],
-      "id": "49db4dab-b914-4b93-a511-a1eb0d37e026",
-      "name": "If"
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "={{ $json.category }} : {{ $json.summary }}",
-        "options": {
-          "systemMessage": "You are an elite, rigorous, and unbiased investigative journalist and fact-checker.\n\nYou will receive input formatted as \"CATEGORY : SUMMARY\" \u2014 a news category and a one-line summary of a broadcast claim. Your job is to verify the factual accuracy of the claims described and assess their global importance.\n\nCRITICAL INSTRUCTIONS:\n1. You MUST use your web search tool to verify the claims before responding. Search for recent news articles, official statements, or trusted data sources.\n2. Cross-reference the broadcast claims against the search results.\n3. Identify any potential bias, missing context, exaggerated phrasing, or outright falsehoods.\n4. Provide both a detailed analysis and a concise, 1-2 sentence summarized version of your verdict.\n5. For every claim you verify or debunk, you must provide the exact URL of the source you used. Only include URLs actually returned by your search tool \u2014 never invent or guess a URL. You must also give a concise 1-2 sentence \"reason\" explaining specifically what that source says and how it confirms, refutes, or fails to settle the claim \u2014 this is evidence for the verdict, not a restatement of the claim.\n6. If a claim cannot be verified through search (no relevant source found either way), mark its verdict as \"Unverifiable\" rather than guessing.\n7. If the summary contains multiple related facts or claims (e.g. several things said about the same person or event), do NOT split them into separate top-level items or restructure the output. Cover every claim within the single flat JSON structure below \u2014 one entry per claim in \"sources_used\", one combined \"analysis\" and \"summarized_analysis\" covering all of them together.\n\nFIELD FORMAT RULES (strict \u2014 every field below must match exactly; put all nuance and explanation in \"analysis\" instead):\n- \"category\" and \"summary\": echo back, unchanged, the CATEGORY and SUMMARY you were given in the input. Do not paraphrase or omit them.\n- \"verdict\" (per source) and \"trust_level\" (overall) must be EXACTLY one of the listed enum values below, with no parenthetical notes, qualifiers, or extra words appended.\n  - verdict: \"True\" | \"False\" | \"Misleading\" | \"Unverifiable\"\n  - trust_level: \"High\" | \"Medium\" | \"Low\" | \"Unverifiable\"\n- \"confidence_score\" is an integer from 0 to 100.\n- \"sources_used\" must contain at least one entry if any claim was checkable, each with exactly the keys \"claim_checked\", \"source_url\", \"verdict\", and \"reason\" \u2014 never \"claim\" or \"url\".\n- MANDATORY: every single object in \"sources_used\", with no exceptions, must include a non-empty \"reason\" key \u2014 1-2 sentences stating what that specific source says and why it makes this claim true/false/misleading. An entry with \"claim_checked\", \"source_url\", \"verdict\" but no \"reason\" is an incomplete, invalid response. Do not skip it, do not leave it out, do not copy \"analysis\" into it \u2014 write a fresh sentence for each source.\n- \"flags\" is a list of short phrases (3-6 words each), not full sentences.\n- Do not add any keys beyond those in the schema below \u2014 no top-level \"verdict\", no \"claims\" array, nothing outside this exact structure.\n- Always respond in English, regardless of the input's source language.\n\nNEWS GRAVITY SCALE \u2014 evaluate \"news_value_importance\" on a scale from 1 to 10 based on real-world impact:\n   1: Trivial / hyperlocal interest only (e.g. a local fair, a minor traffic incident)\n   2: Local interest with modest resonance (e.g. a regional business closure)\n   3: Minor national news (e.g. routine political statements, local elections)\n   4: Notable national news (e.g. a policy proposal introduced)\n   5: Significant national news (e.g. important legislation passed, a notable resignation)\n   6: Major national news with some international relevance (e.g. a national election result, a major court ruling)\n   7: Major international news (e.g. a significant diplomatic development, a large-scale disaster in one country)\n   8: Severe international impact (e.g. major economic disruption, a significant escalation in an ongoing conflict)\n   9: World-altering events with lasting global consequence (e.g. a war breaking out, a pandemic declared)\n   10: Historic, civilization-scale events (e.g. a world war, a global financial collapse, an unprecedented global catastrophe)\n\nCRITICAL JSON FORMATTING RULES:\n- You must respond STRICTLY in valid JSON.\n- DO NOT wrap the response in markdown blocks (e.g., no ```json).\n- OUTPUT MINIFIED JSON. The entire JSON object must be generated on a single continuous line.\n- NEVER use physical line breaks/newlines anywhere in your output. If you need a paragraph break inside the \"analysis\" text, you must use the explicit literal escape characters \"\\n\".\n- Escape any double quotes or backslashes that appear inside string values using standard JSON escaping (\\\" and \\\\) \u2014 never leave a raw unescaped quote inside a string.\n- Do not break JSON keys with spaces or newlines.\n\nYour output must perfectly parse into this structure, and ONLY this structure. Study this worked example closely \u2014 note that BOTH entries in \"sources_used\" have a distinct, specific \"reason\" written from scratch, never omitted:\n{\"summary\": \"echoed from input\", \"category\": \"echoed from input\", \"analysis\": \"Detailed fact-check here. Use \\n for paragraph breaks.\", \"summarized_analysis\": \"Short 1-2 sentence TL;DR verdict.\", \"flags\": [\"short phrase\", \"short phrase\"], \"sources_used\": [{\"claim_checked\": \"Unemployment fell to 4.1% last quarter\", \"source_url\": \"https://www.reuters.com/example-labor-report\", \"verdict\": \"True\", \"reason\": \"Reuters cites the official labor ministry report showing unemployment at 4.1%, matching the claim exactly.\"}, {\"claim_checked\": \"The policy was signed into law in March\", \"source_url\": \"https://www.bbc.com/example-policy-article\", \"verdict\": \"False\", \"reason\": \"The BBC article states the bill was still awaiting a floor vote as of June, so it had not been signed into law.\"}], \"trust_level\": \"High\", \"confidence_score\": 95, \"news_value_importance\": 7}"
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 3.1,
-      "position": [
-        1200,
-        -192
-      ],
-      "id": "780788a0-492c-4e99-9e30-e720c8c6c6c6",
-      "name": "AI Agent1"
-    },
-    {
-      "parameters": {
-        "jsCode": "// 1. Get the JSON payload from the AI Agent node\nlet inputData = $input.first().json;\n\n// 2. Extract the LLM text output\nlet rawText = inputData.output;\n\nif (!rawText) {\n    throw new Error(\"Could not find the LLM output. Expected key 'output'.\");\n}\n\nlet parsedJSON;\ntry {\n    // 3. Strip markdown formatting (the ```json and ``` that Mistral might add)\n    if (typeof rawText === 'string') {\n        let cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();\n        parsedJSON = JSON.parse(cleanText);\n    } else {\n        parsedJSON = rawText; \n    }\n} catch (error) {\n    throw new Error(\"Failed to parse JSON. Mistral output was: \" + rawText);\n}\n\n// 4. Handle different structures the LLM might return\nlet itemsArray = [];\n\nif (Array.isArray(parsedJSON)) {\n    // Case A: The LLM returned a JSON array directly: [ { summary: \"...\", ... } ]\n    itemsArray = parsedJSON;\n} else if (parsedJSON && parsedJSON.news_items && Array.isArray(parsedJSON.news_items)) {\n    // Case B: The LLM returned an object with the key 'news_items'\n    itemsArray = parsedJSON.news_items;\n} else {\n    // Case C: The structure is entirely unexpected.\n    // Throw an error that prints the actual parsed JSON so you can see what went wrong.\n    throw new Error(\"Unexpected JSON structure. Received: \" + JSON.stringify(parsedJSON));\n}\n\n// 5. Return the array in n8n's expected item format.\n// Carry the station id AND the source audio clip reference from the\n// original webhook trigger along on every split news item, so they survive\n// through the If/AI Agent1 branch and can be re-attached to the final\n// payload in \"Code in JavaScript1\". The clip lets the dashboard play back\n// the actual moment a claim was said, not just show the transcribed text.\nconst webhookBody = $('Webhook').first().json.body;\nconst station = webhookBody.station;\nconst audioClipId = webhookBody.audio_clip_id;\nconst audioHighlightStart = webhookBody.audio_clip_highlight_start;\nconst audioHighlightEnd = webhookBody.audio_clip_highlight_end;\n\nreturn itemsArray.map(item => {\n    return {\n        json: {\n            summary: item.summary || \"\",\n            category: item.category || \"\",\n            needs_fact_check: item.needs_fact_check !== undefined ? item.needs_fact_check : null,\n            reasoning: item.reasoning || \"\",\n            station: station,\n            audio_clip_id: audioClipId,\n            audio_clip_highlight_start: audioHighlightStart,\n            audio_clip_highlight_end: audioHighlightEnd\n        }\n    };\n});"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        528,
-        -192
-      ],
-      "id": "e3c82946-6bc3-4f07-afd9-d73fd2ccee7e",
-      "name": "Code in JavaScript"
-    },
-    {
-      "parameters": {
-        "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', ``, 'string') }}",
-        "count": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Count', ``, 'number') }}",
-        "additionalParameters": {}
-      },
-      "type": "@brave/n8n-nodes-brave-search.braveSearchTool",
-      "typeVersion": 1.1,
-      "position": [
-        1456,
-        32
-      ],
-      "id": "2d7f47f3-63ed-43aa-ac2f-fbfe82bb2ba3",
-      "name": "Brave Search",
-      "credentials": {
-        "braveSearchApi": {
-          "id": "xZCLhNK1CFg9NCGH",
-          "name": "Brave Search account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "// 1. Get the raw, mangled string from Mistral\nconst item = $input.first().json;\nlet rawText = item.output || item.text || item.message || item.content || item.response || \"\";\n\n// 2. Extract ONLY the JSON part (ignoring conversational text like \"Voici l'analyse...\")\nconst jsonMatch = rawText.match(/({[\\s\\S]*})/);\nif (!jsonMatch) {\n    return [{ json: { error: \"No JSON object found in output.\", raw_text: rawText } }];\n}\nlet jsonString = jsonMatch[1];\n\n// 3. SURGICAL CLEANING: We must remove newlines that break JSON structure, \n//    but preserve the \"\\n\" characters inside string values.\n\n// A. Temporarily protect valid paragraph breaks (e.g. \\\\n) by swapping them\njsonString = jsonString.replace(/\\\\\\\\n/g, '@@PARAGRAPH@@');\n\n// B. Convert any remaining single backslash-n to protected paragraphs\njsonString = jsonString.replace(/\\\\n/g, '@@PARAGRAPH@@');\n\n// C. Now, destroy ALL physical line breaks and extra spaces that break JSON keys\njsonString = jsonString.replace(/[\\r\\n]+/g, '');\n\n// D. Restore the protected paragraph breaks\njsonString = jsonString.replace(/@@PARAGRAPH@@/g, '\\\\n');\n\n// 4. Parse the cleaned string\nlet parsedData;\ntry {\n    parsedData = JSON.parse(jsonString);\n} catch (e) {\n    return [{ \n        json: { \n            error: \"Failed to parse JSON even after cleaning\", \n            details: e.message, \n            attempted_string: jsonString \n        } \n    }];\n}\n\n// 5. Re-attach the station id and audio clip reference (carried through\n// from the original webhook by the earlier \"Code in JavaScript\" node) so\n// the dashboard can group this fact-check under the right radio station's\n// page and play back the moment the claim was made.\nconst webhookBody = $('Webhook').first().json.body;\nparsedData.station = webhookBody.station;\nparsedData.audio_clip_id = webhookBody.audio_clip_id;\nparsedData.audio_clip_highlight_start = webhookBody.audio_clip_highlight_start;\nparsedData.audio_clip_highlight_end = webhookBody.audio_clip_highlight_end;\n\n// 6. Return it securely as a stringified payload for Next.js\nreturn [{\n    json: {\n        body_payload: JSON.stringify(parsedData)\n    }\n}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1552,
-        -192
-      ],
-      "id": "39c82072-d102-4b7f-aa35-76055eb0dc40",
-      "name": "Code in JavaScript1"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "=http://172.17.0.1:4000/api/webhook",
-        "sendBody": true,
-        "contentType": "raw",
-        "rawContentType": "application/json",
-        "body": "={{ $json.body_payload }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [
-        1760,
-        -192
-      ],
-      "id": "46f4b451-9f69-496f-b68a-7f31b0d16e38",
-      "name": "HTTP Request"
-    }
-  ],
-  "pinData": {},
+  "active": true,
   "connections": {
     "Webhook": {
       "main": [
@@ -298,15 +102,218 @@
       ]
     }
   },
-  "active": true,
-  "settings": {
-    "executionOrder": "v1",
-    "binaryMode": "separate"
-  },
-  "versionId": "a6097def-d9b0-4859-83fa-ac18cc8a607c",
+  "id": "Clf2RZ0xv1K3CKAT",
   "meta": {
     "templateCredsSetupCompleted": true
   },
-  "id": "JP7XZxJxHEPSaC3i",
-  "tags": []
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "httpMethod": [
+          "POST"
+        ],
+        "path": "01e87e3f-162c-477c-a364-ff4020cfa302",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -560,
+        0
+      ],
+      "id": "5e60fb52-35fd-411d-a4c2-2fc719c1c10f",
+      "name": "Webhook",
+      "webhookId": "01e87e3f-162c-477c-a364-ff4020cfa302"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.transcription }}",
+        "options": {
+          "systemMessage": "You are an expert news editor processing a live transcript from a news radio station. The station's language and country vary by feed \u2014 do not assume it's French or any specific language; the transcript language is given by whatever text you're handed.\n\n  Always respond in English, regardless of the transcript's source language. Translate summaries and reasoning into English as you extract them \u2014 do not leave them in the original language.\n\n  Analyze the provided transcript chunk. Sometimes a transcript covers a single topic, and sometimes it contains multiple distinct news stories back-to-back. Break the transcript down into separate news items if necessary.\n\n  CRITICAL FILTERING RULES:\n  You must set \"needs_fact_check\" to false for the following:\n  - Commercial breaks, advertisements, or station jingles.\n  - Sports coverage, match results, or sports commentary.\n  - Weather reports or traffic updates.\n  - Casual banter, host opinions, or filler dialogue.\n\n  IMPORTANT: A claim being stated plainly, or attributed to an official statement or press conference, does NOT make it true or exempt from checking \u2014 the transcript could reflect a rumor, a mistranscription, or a fabricated report. Judge \"needs_fact_check\" by what the claim asserts, not by how it's phrased. Any surprising or high-impact claim (a resignation, a death, a war, a policy reversal, a disaster, a record-breaking statistic) needs verification precisely because it would matter if untrue \u2014 mark these true even when nothing in the wording itself sounds \"disputed\". When genuinely uncertain whether an item is significant enough, default to needs_fact_check: true \u2014 a missed fact-check is worse than a wasted one.\n\n  For EACH valid, distinct news item you identify, extract the following:\n  1. A concise 1-2 sentence summary of the subject, in English.\n  2. One primary category \u2014 choose the single best fit from this exact list: Politics, Health, Technology, World, Finance, Economy, Business, Culture, Sports, Local, Science, Environment, Security, Justice, Education, Immigration. Only use a category outside this list if genuinely none of them fit.\n  3. A determination of whether this specific item contains significant factual claims, controversial statements, or major breaking news that requires fact-checking (true/false) \u2014 this is the \"needs_fact_check\" field.\n\n  JSON FORMATTING RULES:\n  - Respond STRICTLY in valid JSON, with no markdown formatting (no ```json fences) or extra text outside the JSON.\n  - OUTPUT MINIFIED JSON on a single continuous line \u2014 no physical line breaks anywhere in the output.\n  - Escape any double quotes or backslashes that appear inside string values (e.g. a quoted remark from the transcript) using standard JSON escaping (\\\\\" and \\\\\\\\) \u2014 never leave a raw unescaped quote inside a string.\n  - If the entire transcript chunk consists of excluded content (like a commercial break), return an empty array [].\n\n  You must respond STRICTLY in valid JSON format matching this structure, with no markdown formatting or extra text outside the JSON:\n\n{\n  \"news_items\": [\n    {\n      \"summary\": \"string\",\n      \"category\": \"string\",\n      \"needs_fact_check\": boolean,\n      \"reasoning\": \"Brief explanation of why it does or doesn't need fact-checking\"\n    }\n  ]\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -288,
+        0
+      ],
+      "id": "83a76a7d-11a3-4cd4-8c86-42d54f118084",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "ministral-8b-latest",
+        "options": {
+          "temperature": 0.2,
+          "maxTokens": 1024
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        208
+      ],
+      "id": "375ab8a5-e100-464a-9557-f9600e512dce",
+      "name": "Mistral Cloud Chat Model",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "ovFoF8yzr6GFmVQb",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "mistral-large-latest",
+        "options": {
+          "temperature": 0.2,
+          "maxTokens": 4096
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        688,
+        208
+      ],
+      "id": "7eda7972-9ad3-426e-9123-d31a3dffcbc3",
+      "name": "Mistral Cloud Chat Model1",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "ovFoF8yzr6GFmVQb",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4da6a931-9d40-48d2-a3f8-719b310e8a78",
+              "leftValue": "={{ $json.needs_fact_check }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        320,
+        0
+      ],
+      "id": "7b300bba-2500-4c78-9225-21d49bf6bc60",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.category }} : {{ $json.summary }}",
+        "options": {
+          "systemMessage": "You are an elite, rigorous, and unbiased investigative journalist and fact-checker.\n\nYou will receive input formatted as \"CATEGORY : SUMMARY\" \u2014 a news category and a one-line summary of a broadcast claim. Your job is to verify the factual accuracy of the claims described and assess their global importance.\n\nCRITICAL INSTRUCTIONS:\n1. You MUST use your web search tool to verify the claims before responding. Search for recent news articles, official statements, or trusted data sources.\n2. Cross-reference the broadcast claims against the search results.\n3. Identify any potential bias, missing context, exaggerated phrasing, or outright falsehoods.\n4. Provide both a detailed analysis and a concise, 1-2 sentence summarized version of your verdict.\n5. For every claim you verify or debunk, you must provide the exact URL of the source you used. Only include URLs actually returned by your search tool \u2014 never invent or guess a URL. You must also give a concise 1-2 sentence \"reason\" explaining specifically what that source says and how it confirms, refutes, or fails to settle the claim \u2014 this is evidence for the verdict, not a restatement of the claim.\n6. If a claim cannot be verified through search (no relevant source found either way), mark its verdict as \"Unverifiable\" rather than guessing.\n7. If the summary contains multiple related facts or claims (e.g. several things said about the same person or event), do NOT split them into separate top-level items or restructure the output. Cover every claim within the single flat JSON structure below \u2014 one entry per claim in \"sources_used\", one combined \"analysis\" and \"summarized_analysis\" covering all of them together.\n\nFIELD FORMAT RULES (strict \u2014 every field below must match exactly; put all nuance and explanation in \"analysis\" instead):\n- \"category\" and \"summary\": echo back, unchanged, the CATEGORY and SUMMARY you were given in the input. Do not paraphrase or omit them.\n- \"verdict\" (per source) and \"trust_level\" (overall) must be EXACTLY one of the listed enum values below, with no parenthetical notes, qualifiers, or extra words appended.\n  - verdict: \"True\" | \"False\" | \"Misleading\" | \"Unverifiable\"\n  - trust_level: \"High\" | \"Medium\" | \"Low\" | \"Unverifiable\"\n- \"confidence_score\" is an integer from 0 to 100.\n- \"sources_used\" must contain at least one entry if any claim was checkable, each with exactly the keys \"claim_checked\", \"source_url\", \"verdict\", and \"reason\" \u2014 never \"claim\" or \"url\".\n- MANDATORY: every single object in \"sources_used\", with no exceptions, must include a non-empty \"reason\" key \u2014 1-2 sentences stating what that specific source says and why it makes this claim true/false/misleading. An entry with \"claim_checked\", \"source_url\", \"verdict\" but no \"reason\" is an incomplete, invalid response. Do not skip it, do not leave it out, do not copy \"analysis\" into it \u2014 write a fresh sentence for each source.\n- \"flags\" is a list of short phrases (3-6 words each), not full sentences.\n- Do not add any keys beyond those in the schema below \u2014 no top-level \"verdict\", no \"claims\" array, nothing outside this exact structure.\n- Always respond in English, regardless of the input's source language.\n\nNEWS GRAVITY SCALE \u2014 evaluate \"news_value_importance\" on a scale from 1 to 10 based on real-world impact:\n   1: Trivial / hyperlocal interest only (e.g. a local fair, a minor traffic incident)\n   2: Local interest with modest resonance (e.g. a regional business closure)\n   3: Minor national news (e.g. routine political statements, local elections)\n   4: Notable national news (e.g. a policy proposal introduced)\n   5: Significant national news (e.g. important legislation passed, a notable resignation)\n   6: Major national news with some international relevance (e.g. a national election result, a major court ruling)\n   7: Major international news (e.g. a significant diplomatic development, a large-scale disaster in one country)\n   8: Severe international impact (e.g. major economic disruption, a significant escalation in an ongoing conflict)\n   9: World-altering events with lasting global consequence (e.g. a war breaking out, a pandemic declared)\n   10: Historic, civilization-scale events (e.g. a world war, a global financial collapse, an unprecedented global catastrophe)\n\nCRITICAL JSON FORMATTING RULES:\n- You must respond STRICTLY in valid JSON.\n- DO NOT wrap the response in markdown blocks (e.g., no ```json).\n- OUTPUT MINIFIED JSON. The entire JSON object must be generated on a single continuous line.\n- NEVER use physical line breaks/newlines anywhere in your output. If you need a paragraph break inside the \"analysis\" text, you must use the explicit literal escape characters \"\\n\".\n- Escape any double quotes or backslashes that appear inside string values using standard JSON escaping (\\\" and \\\\) \u2014 never leave a raw unescaped quote inside a string.\n- Do not break JSON keys with spaces or newlines.\n\nYour output must perfectly parse into this structure, and ONLY this structure. Study this worked example closely \u2014 note that BOTH entries in \"sources_used\" have a distinct, specific \"reason\" written from scratch, never omitted:\n{\"summary\": \"echoed from input\", \"category\": \"echoed from input\", \"analysis\": \"Detailed fact-check here. Use \\n for paragraph breaks.\", \"summarized_analysis\": \"Short 1-2 sentence TL;DR verdict.\", \"flags\": [\"short phrase\", \"short phrase\"], \"sources_used\": [{\"claim_checked\": \"Unemployment fell to 4.1% last quarter\", \"source_url\": \"https://www.reuters.com/example-labor-report\", \"verdict\": \"True\", \"reason\": \"Reuters cites the official labor ministry report showing unemployment at 4.1%, matching the claim exactly.\"}, {\"claim_checked\": \"The policy was signed into law in March\", \"source_url\": \"https://www.bbc.com/example-policy-article\", \"verdict\": \"False\", \"reason\": \"The BBC article states the bill was still awaiting a floor vote as of June, so it had not been signed into law.\"}], \"trust_level\": \"High\", \"confidence_score\": 95, \"news_value_importance\": 7}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        736,
+        -16
+      ],
+      "id": "14e9b5d5-596e-469e-a6f2-e7902c9b9a1c",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get the JSON payload from the AI Agent node\nlet inputData = $input.first().json;\n\n// 2. Extract the LLM text output\nlet rawText = inputData.output;\n\nif (!rawText) {\n    throw new Error(\"Could not find the LLM output. Expected key 'output'.\");\n}\n\nlet parsedJSON;\ntry {\n    // 3. Strip markdown formatting (the ```json and ``` that Mistral might add)\n    if (typeof rawText === 'string') {\n        let cleanText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();\n        parsedJSON = JSON.parse(cleanText);\n    } else {\n        parsedJSON = rawText; \n    }\n} catch (error) {\n    throw new Error(\"Failed to parse JSON. Mistral output was: \" + rawText);\n}\n\n// 4. Handle different structures the LLM might return\nlet itemsArray = [];\n\nif (Array.isArray(parsedJSON)) {\n    // Case A: The LLM returned a JSON array directly: [ { summary: \"...\", ... } ]\n    itemsArray = parsedJSON;\n} else if (parsedJSON && parsedJSON.news_items && Array.isArray(parsedJSON.news_items)) {\n    // Case B: The LLM returned an object with the key 'news_items'\n    itemsArray = parsedJSON.news_items;\n} else {\n    // Case C: The structure is entirely unexpected.\n    // Throw an error that prints the actual parsed JSON so you can see what went wrong.\n    throw new Error(\"Unexpected JSON structure. Received: \" + JSON.stringify(parsedJSON));\n}\n\n// 5. Return the array in n8n's expected item format.\n// Carry the station id AND the source audio clip reference from the\n// original webhook trigger along on every split news item, so they survive\n// through the If/AI Agent1 branch and can be re-attached to the final\n// payload in \"Code in JavaScript1\". The clip lets the dashboard play back\n// the actual moment a claim was said, not just show the transcribed text.\nconst webhookBody = $('Webhook').first().json.body;\nconst station = webhookBody.station;\nconst audioClipId = webhookBody.audio_clip_id;\nconst audioHighlightStart = webhookBody.audio_clip_highlight_start;\nconst audioHighlightEnd = webhookBody.audio_clip_highlight_end;\n\nreturn itemsArray.map(item => {\n    return {\n        json: {\n            summary: item.summary || \"\",\n            category: item.category || \"\",\n            needs_fact_check: typeof item.needs_fact_check === 'boolean'\n                ? item.needs_fact_check\n                : typeof item.needs_fact_check === 'string'\n                    ? item.needs_fact_check.trim().toLowerCase() === 'true'\n                    : null,\n            reasoning: item.reasoning || \"\",\n            station: station,\n            audio_clip_id: audioClipId,\n            audio_clip_highlight_start: audioHighlightStart,\n            audio_clip_highlight_end: audioHighlightEnd\n        }\n    };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        -16
+      ],
+      "id": "893b7aee-fd55-4af9-84e1-18f10287e572",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "query": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Query', 'Concise, specific search keywords for this exact claim (names, dates, key facts) - not the full sentence. Issue one focused search per distinct fact you need to verify.', 'string') }}",
+        "count": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Count', 'Number of search results to retrieve. Use 5 unless the claim is unusually obscure or contested, in which case up to 8 is fine.', 'number', 5) }}",
+        "additionalParameters": {}
+      },
+      "type": "@brave/n8n-nodes-brave-search.braveSearchTool",
+      "typeVersion": 1.1,
+      "position": [
+        992,
+        208
+      ],
+      "id": "83b052ec-5252-440c-b7ec-3df589ae59a9",
+      "name": "Brave Search",
+      "credentials": {
+        "braveSearchApi": {
+          "id": "czt4RnccI37Kx1OU",
+          "name": "Brave Search account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get the raw, mangled string from Mistral\nconst item = $input.first().json;\nlet rawText = item.output || item.text || item.message || item.content || item.response || \"\";\n\n// 2. Extract ONLY the JSON part (ignoring conversational text like \"Voici l'analyse...\")\nconst jsonMatch = rawText.match(/({[\\s\\S]*})/);\nif (!jsonMatch) {\n    throw new Error(\"No JSON object found in output. Raw text: \" + rawText);\n}\nlet jsonString = jsonMatch[1];\n\n// 3. SURGICAL CLEANING: We must remove newlines that break JSON structure, \n//    but preserve the \"\\n\" characters inside string values.\n\n// A. Temporarily protect valid paragraph breaks (e.g. \\\\n) by swapping them\njsonString = jsonString.replace(/\\\\\\\\n/g, '@@PARAGRAPH@@');\n\n// B. Convert any remaining single backslash-n to protected paragraphs\njsonString = jsonString.replace(/\\\\n/g, '@@PARAGRAPH@@');\n\n// C. Now, destroy ALL physical line breaks and extra spaces that break JSON keys\njsonString = jsonString.replace(/[\\r\\n]+/g, '');\n\n// D. Restore the protected paragraph breaks\njsonString = jsonString.replace(/@@PARAGRAPH@@/g, '\\\\n');\n\n// 4. Parse the cleaned string\nlet parsedData;\ntry {\n    parsedData = JSON.parse(jsonString);\n} catch (e) {\n    throw new Error(\"Failed to parse JSON even after cleaning: \" + e.message + \" | Attempted string: \" + jsonString);\n}\n\n// 5. Re-attach the station id and audio clip reference (carried through\n// from the original webhook by the earlier \"Code in JavaScript\" node) so\n// the dashboard can group this fact-check under the right radio station's\n// page and play back the moment the claim was made.\nconst webhookBody = $('Webhook').first().json.body;\nparsedData.station = webhookBody.station;\nparsedData.audio_clip_id = webhookBody.audio_clip_id;\nparsedData.audio_clip_highlight_start = webhookBody.audio_clip_highlight_start;\nparsedData.audio_clip_highlight_end = webhookBody.audio_clip_highlight_end;\n\n// 6. Return it securely as a stringified payload for Next.js\nreturn [{\n    json: {\n        body_payload: JSON.stringify(parsedData)\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        -16
+      ],
+      "id": "525844e0-e878-465b-b5df-998feab07a4c",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:4000/api/webhook",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body_payload }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1296,
+        -16
+      ],
+      "id": "269d491f-8121-44f8-b5b1-615bff3f3d70",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "tags": [],
+  "versionId": "d70e2e91-9916-4c1b-9aaf-dc11ae00fcb3"
 }

@@ -9,6 +9,7 @@ const DICT: Record<Lang, Record<string, string>> = {
   en: {
     "nav.liveRadio": "Live Radio",
     "nav.factCheck": "Fact-Check",
+    "nav.interview": "Interview",
     "nav.searchPlaceholder": "Search articles",
     "nav.searchLabel": "Search articles",
 
@@ -35,6 +36,11 @@ const DICT: Record<Lang, Record<string, string>> = {
     "factCheck.analyzingNote": "This searches the web and cross-checks sources, so it typically takes 20-60 seconds.",
     "factCheck.ready": "Fact-check ready",
     "factCheck.viewFull": "View full analysis",
+
+    "home.heroEyebrow": "About Verity",
+    "home.heroHeading": "Real-time fact-checking for live radio",
+    "home.heroDescription":
+      "Verity listens to live news radio, transcribes every broadcast, and fact-checks each claim as it airs — cross-referencing sources and scoring each station's track record. Browse verified stories below, or head to Live Radio to watch it happen station by station.",
 
     "home.loading": "Loading verified stories…",
     "home.eyebrowTop": "Top Stories",
@@ -121,6 +127,28 @@ const DICT: Record<Lang, Record<string, string>> = {
     "radio.close": "Close",
     "radio.mapLegendMonitored": "Monitored",
     "radio.mapLegendListenOnly": "Listen only",
+    "radio.viewByCountry": "By country",
+    "radio.viewMap": "Map view",
+    "radio.byCountry": "By Country",
+    "radio.byCountryHeading": "Stations by country",
+    "radio.byCountryDescription":
+      "Every station grouped by country, with its Bullshit Score and monitoring status at a glance.",
+    "radio.stationsCount": "{count} stations",
+    "radio.history": "History",
+    "radio.claimAnalysis": "Claim Analysis",
+    "radio.statistics": "Statistics",
+
+    "interview.eyebrow": "Live Interview",
+    "interview.heading": "Fact-check an interview as it happens",
+    "interview.description":
+      "Start recording and Verity transcribes what's said in near real time, automatically fact-checking every substantial claim as it comes in — the same pipeline as our live radio feeds.",
+    "interview.start": "Start Interview",
+    "interview.stop": "Stop Interview",
+    "interview.startNew": "Start New Interview",
+    "interview.live": "Live",
+    "interview.ended": "Session ended",
+    "interview.sessionTime": "Session time",
+    "interview.emptyIdle": "Start an interview session to see live fact-checks appear here.",
 
     "player.liveNow": "Live now",
     "player.paused": "Paused",
@@ -130,6 +158,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     "nav.searchPlaceholder": "Rechercher des articles",
     "nav.searchLabel": "Rechercher des articles",
     "nav.factCheck": "Vérifier",
+    "nav.interview": "Interview",
 
     "factCheck.eyebrow": "Soumettre une affirmation",
     "factCheck.heading": "Vérifiez n'importe quelle affirmation",
@@ -154,6 +183,11 @@ const DICT: Record<Lang, Record<string, string>> = {
     "factCheck.analyzingNote": "Cela recherche sur le web et recoupe les sources, ce qui prend généralement 20 à 60 secondes.",
     "factCheck.ready": "Vérification terminée",
     "factCheck.viewFull": "Voir l'analyse complète",
+
+    "home.heroEyebrow": "À propos de Verity",
+    "home.heroHeading": "Le fact-checking en temps réel de la radio en direct",
+    "home.heroDescription":
+      "Verity écoute les radios d'information en direct, transcrit chaque diffusion et vérifie chaque affirmation au moment où elle est prononcée — en recoupant les sources et en notant la fiabilité de chaque station. Parcourez les actualités vérifiées ci-dessous, ou rendez-vous sur Radio en direct pour le voir se faire station par station.",
 
     "home.loading": "Chargement des actualités vérifiées…",
     "home.eyebrowTop": "À la une",
@@ -240,6 +274,28 @@ const DICT: Record<Lang, Record<string, string>> = {
     "radio.close": "Fermer",
     "radio.mapLegendMonitored": "Surveillée",
     "radio.mapLegendListenOnly": "Écoute seule",
+    "radio.viewByCountry": "Par pays",
+    "radio.viewMap": "Vue carte",
+    "radio.byCountry": "Par pays",
+    "radio.byCountryHeading": "Stations par pays",
+    "radio.byCountryDescription":
+      "Toutes les stations regroupées par pays, avec leur Bullshit Score et leur statut de surveillance en un coup d'œil.",
+    "radio.stationsCount": "{count} stations",
+    "radio.history": "Historique",
+    "radio.claimAnalysis": "Analyse du claim",
+    "radio.statistics": "Statistiques",
+
+    "interview.eyebrow": "Interview en direct",
+    "interview.heading": "Vérifiez une interview en temps réel",
+    "interview.description":
+      "Lancez l'enregistrement et Verity transcrit ce qui est dit en quasi temps réel, en vérifiant automatiquement chaque affirmation substantielle au fil de l'eau — le même pipeline que nos flux radio en direct.",
+    "interview.start": "Démarrer l'interview",
+    "interview.stop": "Arrêter l'interview",
+    "interview.startNew": "Nouvelle interview",
+    "interview.live": "En direct",
+    "interview.ended": "Session terminée",
+    "interview.sessionTime": "Durée de la session",
+    "interview.emptyIdle": "Démarrez une session d'interview pour voir les vérifications apparaître ici.",
 
     "player.liveNow": "En direct",
     "player.paused": "En pause",
