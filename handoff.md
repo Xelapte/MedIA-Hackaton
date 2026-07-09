@@ -71,13 +71,23 @@ clearly exists on disk: it's a stale `.next` cache, not a real error —
   (`dashboard/lib/stationRuntime.ts`) — it's not a fake flag.
 - **World map on `/radio`** (`dashboard/components/WorldMapStations.tsx`,
   via `react-simple-maps` + `world-atlas`, bundled topojson — no runtime
-  fetch): a dark, teal-toned "radar" map sitting as a normal card
-  (`420px`/`480px` tall) beside the station list, not full-bleed — an
+  fetch): sits as a normal card beside the station list, not full-bleed — an
   earlier full-viewport-height version was walked back because it felt
-  disconnected from the rest of the site and hijacked page scroll. Dots are
-  colored by monitoring state (green/glowing = monitored, muted warm-gray =
-  listen-only, same hue families as `verdict-true`/`ink` elsewhere in the
-  app, not an unrelated cyan/blue palette). Same-city stations (e.g. 3 Paris
+  disconnected from the rest of the site and hijacked page scroll. **Recolored
+  this session**: the map originally shipped with its own dark navy/teal
+  "radar" theme (`#0a1512` background, neon green/cyan) that didn't match the
+  site's warm cream/ink editorial palette at all. It now pulls exclusively
+  from the same Tailwind tokens the rest of the app uses — `paper`/`card` for
+  land/ocean, `ink`-toned strokes, `verdict-true` green for monitored
+  stations and `verdict-unverified` warm gray for listen-only (the same
+  colors already used for "Monitored" badges elsewhere) — plus the legend
+  chip and zoom controls switched from teal-glass to the same
+  `bg-card/90` + `border-ink/10` treatment every other floating panel uses.
+  Also **bumped its size** — height goes from a fixed 480px to 640px at `lg`
+  desktop widths (it read as too small relative to the rest of the screen),
+  with the station-list sidebar's scroll-clip height kept in sync so the two
+  columns still line up. Dots are colored by monitoring state (green/glowing
+  = monitored, muted warm-gray = listen-only). Same-city stations (e.g. 3 Paris
   stations) are jittered into a small ring in the *rendering* only — the
   underlying `lat`/`lng` in `stations.json` is the true city coordinate.
   Click a dot → a floating popup reuses the same card styling as the
@@ -104,7 +114,21 @@ clearly exists on disk: it's a stale `.next` cache, not a real error —
   weighted so a false claim on a high-gravity story hurts far more than one
   on a trivial story (asymmetric: False stronger penalty than True's
   reward). Shown as an **overall** score on `/radio/[id]` plus an
-  **independent score per topic**.
+  **independent score per topic**. **Reworked this session** to fix two
+  sources of "too punitive" grading that had nothing to do with the
+  underlying True/False/Misleading labels (those are untouched — still the
+  LLM's honest per-source finding): (1) it used to collapse every story to
+  its single *worst* source verdict — a story backed by 2 True sources and
+  1 Misleading one scored as if the whole thing were misleading, discarding
+  the corroboration. It now averages accuracy across every source on a
+  story. (2) `confidence_score` was captured from the LLM and shown on the
+  article page but never actually fed into the score — a shaky
+  55%-confidence "False" call swung the score exactly as hard as a
+  95%-confidence one. It's now a direct multiplier that dampens uncertain
+  rulings toward neutral. The asymmetric penalty and gravity weighting are
+  unchanged (that part was intentional, not the bug). Verified against the
+  live dev server with synthetic data — see `computeBullshitScore` in
+  `lib/bullshitScore.ts` for the full reasoning in comments.
 - **Evidence Log with per-source reasoning** (`/article/[id]`): each source
   under "Evidence Log" now shows a `reason` line — 1-2 sentences on *why*
   that specific source proves the claim true/false/misleading, not just the
@@ -180,6 +204,19 @@ clearly exists on disk: it's a stale `.next` cache, not a real error —
 - **The very last chunk before a listener is stopped never gets an audio
   clip** (it needs the *next* chunk to arrive to know its "after" padding,
   which never comes). Minor, not worth fixing for the hackathon.
+
+## Repo / Git
+
+Pushed to `git@github.com:Xelapte/MedIA-Hackaton.git` (`main`). `.gitignore`
+covers `node_modules/`, `.venv/`, `.next/` (Next.js build cache — stale
+copies of this have caused `PageNotFoundError`s before, see above),
+`.agents/` (local Claude Code skill cache — `dashboard/skills-lock.json` is
+still tracked, same pattern as `package-lock.json`+`node_modules/`),
+`app/audio_clips/` (runtime-generated `.wav` clips, currently ~277MB and
+growing — regenerable, never commit these), and `n8n/.env` (currently empty,
+but env files shouldn't be tracked on principle). A stale `live-news-dashboard`
+git submodule gitlink (no `.gitmodules`, no longer present on disk) was
+removed this session.
 
 ## Config / where things live
 
